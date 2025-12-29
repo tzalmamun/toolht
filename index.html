@@ -1,0 +1,302 @@
+*<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ayan Tools</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui;background:#f2f4f8}
+
+/* HEADER */
+header{
+ background:#4f46e5;color:#fff;
+ padding:12px 14px;
+ display:flex;justify-content:space-between;align-items:center
+}
+header .left{display:flex;gap:10px;align-items:center}
+header img{width:34px;border-radius:50%}
+header a{
+ color:#fff;text-decoration:none;
+ background:rgba(255,255,255,.15);
+ padding:6px 12px;border-radius:10px;font-size:14px
+}
+
+/* SLIDER */
+.slider{padding:14px}
+.slider img{
+ width:100%;
+ border-radius:18px;
+ box-shadow:0 8px 24px rgba(0,0,0,.25)
+}
+
+/* SEARCH */
+.search{padding:12px;position:relative}
+.search input{
+ width:100%;padding:12px 14px;
+ border-radius:14px;border:1px solid #ddd;font-size:16px
+}
+.suggest{
+ position:absolute;
+ width:calc(100% - 24px);
+ background:#fff;margin-top:6px;border-radius:12px;
+ box-shadow:0 8px 20px rgba(0,0,0,.15);
+ display:none;z-index:10
+}
+.suggest div{padding:10px 14px;cursor:pointer}
+.suggest div:hover{background:#f1f1f1}
+
+/* GRID */
+.grid{
+ display:grid;grid-template-columns:repeat(2,1fr);
+ gap:14px;padding:14px
+}
+.card{
+ background:#fff;border-radius:16px;
+ padding:14px 10px;text-align:center;
+ box-shadow:0 6px 18px rgba(0,0,0,.08);
+ cursor:pointer
+}
+.card img{width:48px;height:48px;object-fit:contain}
+.card b{display:block;margin-top:8px;font-size:15px}
+.card small{font-size:12px;color:#666}
+
+/* TOOLS */
+.tool{display:none;padding:14px}
+textarea,input{
+ width:100%;padding:10px;margin:6px 0;
+ border-radius:10px;border:1px solid #ccc
+}
+button{
+ width:100%;padding:11px;margin-top:6px;
+ border:none;border-radius:12px;
+ background:#4f46e5;color:#fff;font-size:15px
+}
+iframe{width:100%;height:70vh;border:none;border-radius:14px}
+canvas{max-width:100%}
+
+/* FOOTER */
+footer{
+ text-align:center;padding:14px;font-size:13px;color:#555
+}
+footer a{color:#4f46e5;text-decoration:none;font-weight:600}
+</style>
+</head>
+
+<body>
+
+<header>
+ <div class="left">
+  <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+  <b>Ayan Tools</b>
+ </div>
+ <a href="https://t.me/ayancreatorbd" target="_blank">Telegram</a>
+</header>
+
+<!-- SLIDER -->
+<div class="slider">
+ <a id="slideLink" target="_blank">
+  <img id="slideImg">
+ </a>
+</div>
+
+<!-- SEARCH -->
+<div class="search">
+ <input id="search" placeholder="🔍 Search tools" oninput="filterTools()">
+ <div id="suggest" class="suggest"></div>
+</div>
+
+<!-- HOME -->
+<div id="home" class="grid"></div>
+
+<!-- ===== INTERNAL TOOLS ===== -->
+
+<div id="notepad" class="tool">
+ <textarea id="note" placeholder="Write your note..."></textarea>
+ <button onclick="saveNote()">Save</button>
+ <button onclick="clearNote()">Delete</button>
+</div>
+
+<div id="qr" class="tool">
+ <input id="qrText" placeholder="Text or URL">
+ <button onclick="makeQR()">Generate QR</button>
+ <div id="qrBox" style="text-align:center;margin:10px"></div>
+ <button onclick="downloadQR()">Download</button>
+</div>
+
+<div id="imagetoqr" class="tool">
+ <input type="file" id="imgToQrFile">
+ <button onclick="createImageQR()">Generate Image QR</button>
+ <div id="imgToQrBox" style="text-align:center;margin:12px"></div>
+ <button onclick="downloadImageQR()">Download</button>
+</div>
+
+<div id="password" class="tool">
+ <input id="plen" type="number" placeholder="Password Length">
+ <button onclick="genPass()">Generate</button>
+ <input id="pout">
+ <button onclick="navigator.clipboard.writeText(pout.value)">Copy</button>
+</div>
+
+<div id="editor" class="tool">
+ <textarea id="htmlCode" placeholder="Write HTML"></textarea>
+ <button onclick="preview.srcdoc=htmlCode.value">Live Preview</button>
+ <iframe id="preview"></iframe>
+</div>
+
+<div id="image" class="tool">
+ <input type="file" id="imgInput">
+ <input id="w" placeholder="Width">
+ <input id="h" placeholder="Height">
+ <canvas id="canvas"></canvas>
+ <button onclick="resizeImg()">Resize</button>
+ <button onclick="downloadImg()">Download</button>
+</div>
+
+<div id="reverse" class="tool">
+ <textarea id="rev"></textarea>
+ <button onclick="rev.value=rev.value.split('').reverse().join('')">Reverse</button>
+</div>
+
+<div id="source" class="tool">
+ <input id="siteUrl" placeholder="https://example.com">
+ <button onclick="viewSource()">View Source</button>
+ <iframe id="sourceFrame"></iframe>
+</div>
+
+<div id="protect" class="tool">
+ <input id="protectUrl" placeholder="Website URL">
+ <button onclick="protectFrame.src=protectUrl.value">Open</button>
+ <iframe id="protectFrame"></iframe>
+</div>
+
+<footer>
+ Design by <a href="https://itzalmamundev.blogspot.com/?m=1" target="_blank">Mamun Dv</a>
+</footer>
+
+<script>
+/* ========= SLIDER ========= */
+const videos=["MFoHZv5V6DU","0wOe_Z0qsCQ","mpLavCK1vq4","8dXqQ-QMwz8"];
+let cur=0;
+function slide(){
+ slideImg.src="https://img.youtube.com/vi/"+videos[cur]+"/hqdefault.jpg";
+ slideLink.href="https://youtu.be/"+videos[cur];
+ cur=(cur+1)%videos.length;
+}
+slide(); setInterval(slide,4000);
+
+/* ========= TOOLS LIST ========= */
+const tools=[
+ {n:"Notepad",bn:"নোট লেখার জন্য",id:"notepad",icon:"https://cdn-icons-png.flaticon.com/512/3209/3209265.png"},
+ {n:"QR Generator",bn:"QR কোড বানাতে",id:"qr",icon:"https://cdn-icons-png.flaticon.com/512/564/564619.png"},
+ {n:"Image to QR",bn:"ছবি থেকে QR বানাতে",id:"imagetoqr",icon:"https://cdn-icons-png.flaticon.com/512/1087/1087854.png"},
+ {n:"Password Generator",bn:"পাসওয়ার্ড বানাতে",id:"password",icon:"https://cdn-icons-png.flaticon.com/512/3064/3064155.png"},
+ {n:"HTML Editor",bn:"HTML কোড লিখতে",id:"editor",icon:"https://cdn-icons-png.flaticon.com/512/1006/1006363.png"},
+ {n:"Image Resize",bn:"ছবি রিসাইজ করতে",id:"image",icon:"https://cdn-icons-png.flaticon.com/512/1829/1829586.png"},
+ {n:"Text Reverser",bn:"টেক্সট উল্টো করতে",id:"reverse",icon:"https://cdn-icons-png.flaticon.com/512/1828/1828919.png"},
+ {n:"Source Viewer",bn:"ওয়েবসাইট কোড দেখতে",id:"source",icon:"https://cdn-icons-png.flaticon.com/512/2920/2920244.png"},
+ {n:"HTML Protect",bn:"iframe এ সাইট খুলতে",url:"https://tzalmamun.github.io/htmlProtector",icon:"https://cdn-icons-png.flaticon.com/512/3064/3064197.png"},
+ {n:"Blogger Tools",bn:"ফ্রি ব্লগার ওয়েবসাইট",url:"https://www.blogger.com",icon:"https://www.blogger.com/favicon.ico"},
+ {n:"ChatGPT",bn:"AI চ্যাট ও লেখা",url:"https://chatgpt.com",icon:"https://chatgpt.com/favicon.ico"},
+ {n:"Google AI Studio",bn:"Google AI টুল",url:"https://aistudio.google.com",icon:"https://www.google.com/favicon.ico"},
+ {n:"Grok AI",bn:"AI প্রশ্ন উত্তর",url:"https://grok.com",icon:"https://cdn-icons-png.flaticon.com/512/4712/4712109.png"},
+ {n:"Canva",bn:"ডিজাইন তৈরি করতে",url:"https://www.canva.com",icon:"https://www.canva.com/favicon.ico"},
+ {n:"Ideogram",bn:"AI ইমেজ বানাতে",url:"https://ideogram.ai",icon:"https://ideogram.ai/favicon.ico"}
+];
+
+const home=document.getElementById("home");
+const suggest=document.getElementById("suggest");
+
+tools.forEach(t=>{
+ let c=document.createElement("div");
+ c.className="card";
+ c.innerHTML=`<img src="${t.icon}"><b>${t.n}</b><small>${t.bn}</small>`;
+ c.onclick=()=>t.url?window.open(t.url,"_blank"):openTool(t.id);
+ home.appendChild(c);
+});
+
+function openTool(id){
+ document.querySelectorAll(".tool").forEach(e=>e.style.display="none");
+ home.style.display="none";
+ document.getElementById(id).style.display="block";
+ history.pushState({},"","#"+id);
+}
+window.onpopstate=()=>{home.style.display="grid";document.querySelectorAll(".tool").forEach(e=>e.style.display="none");}
+
+/* SEARCH */
+function filterTools(){
+ let q=search.value.toLowerCase();
+ suggest.innerHTML="";
+ if(!q){suggest.style.display="none";return}
+ tools.filter(t=>(t.n+t.bn).toLowerCase().includes(q)).forEach(t=>{
+  let d=document.createElement("div");
+  d.textContent=t.n;
+  d.onclick=()=>t.url?window.open(t.url,"_blank"):openTool(t.id);
+  suggest.appendChild(d);
+ });
+ suggest.style.display="block";
+}
+
+/* NOTEPAD */
+note.value=localStorage.getItem("ayan_note")||"";
+function saveNote(){localStorage.setItem("ayan_note",note.value);alert("Saved")}
+function clearNote(){note.value="";localStorage.removeItem("ayan_note")}
+
+/* QR */
+let qr;
+function makeQR(){
+ qrBox.innerHTML="";
+ qr=new QRCode(qrBox,{text:qrText.value,width:200,height:200});
+}
+function downloadQR(){
+ let img=qrBox.querySelector("img"); if(!img)return;
+ let a=document.createElement("a");a.href=img.src;a.download="qr.png";a.click();
+}
+
+/* IMAGE → QR */
+let imgQR=new Image();
+imgToQrFile.onchange=e=>{
+ let r=new FileReader();r.onload=()=>imgQR.src=r.result;
+ r.readAsDataURL(e.target.files[0]);
+}
+function createImageQR(){
+ imgToQrBox.innerHTML="";
+ qr=new QRCode(imgToQrBox,{text:imgQR.src,width:220,height:220});
+}
+function downloadImageQR(){
+ let img=imgToQrBox.querySelector("img"); if(!img)return;
+ let a=document.createElement("a");a.href=img.src;a.download="image-qr.png";a.click();
+}
+
+/* PASSWORD */
+function genPass(){
+ let c="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+ let p="";for(let i=0;i<plen.value;i++)p+=c[Math.random()*c.length|0];
+ pout.value=p;
+}
+
+/* IMAGE RESIZE */
+let imgObj=new Image();
+imgInput.onchange=e=>{
+ let r=new FileReader();r.onload=()=>imgObj.src=r.result;
+ r.readAsDataURL(e.target.files[0]);
+}
+function resizeImg(){
+ canvas.width=w.value;canvas.height=h.value;
+ canvas.getContext("2d").drawImage(imgObj,0,0,w.value,h.value);
+}
+function downloadImg(){
+ let a=document.createElement("a");a.href=canvas.toDataURL();a.download="image.png";a.click();
+}
+
+/* SOURCE */
+function viewSource(){
+ let u=siteUrl.value.replace(/https?:\/\//,'');
+ sourceFrame.src="https://r.jina.ai/http://"+u;
+}
+</script>
+
+</body>
+</html>
